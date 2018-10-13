@@ -1,0 +1,62 @@
+---
+title: "p8105_hw3_gwk2111"
+author: "Zach Keefer"
+date: "10/11/2018"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(p8105.datasets)
+```
+
+##Problem 1
+
+```{r}
+brfss_data = brfss_smart2010 %>% 
+  janitor::clean_names() %>%
+  filter(topic == "Overall Health") %>% 
+  mutate(response = factor(response, levels = c("Excellent", "Very good", "Good", "Fair", "Poor"), ordered = TRUE))
+```
+
+```{r}
+filter(brfss_data, year == 2002) %>% 
+  group_by(locationabbr) %>% 
+  summarise(location_freq = n_distinct(geo_location)) %>% 
+  filter(location_freq == 7)
+```
+
+```{r}
+group_by(brfss_data, locationabbr, year) %>% 
+  summarise(location_freq = n_distinct(geo_location)) %>%  
+   ggplot(aes(x = year, y = location_freq)) +
+       geom_line(aes(color = locationabbr))   
+```
+
+```{r}
+filter(brfss_data, year == 2002 | year == 2006 | year == 2010, locationabbr == "NY") %>% 
+  spread(key = response, value = data_value) %>% 
+  group_by(year) %>% 
+  summarize(mean_proportion = mean(Excellent, na.rm = TRUE),
+            sd = sd(Excellent, na.rm = TRUE)) %>% 
+  knitr::kable(digits = 3)
+```
+
+```{r}
+spread(brfss_data, key = response, value = data_value) %>% 
+  janitor::clean_names() %>% 
+  group_by(locationabbr, year) %>% 
+  summarize(mean_excellent = mean(excellent, na.rm = TRUE),
+         mean_very_good = mean(very_good, na.rm = TRUE),
+         mean_good = mean(good, na.rm = TRUE),
+         mean_fair = mean(fair, na.rm = TRUE),
+         mean_poor = mean(poor, na.rm = TRUE)) %>%
+  gather(key = response, value = mean, mean_excellent:mean_poor) %>% 
+  ggplot(aes(x = year, y = mean)) +
+  geom_line(aes(color = locationabbr)) +
+  facet_grid(~response)
+```
+
+
