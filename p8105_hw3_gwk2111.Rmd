@@ -60,3 +60,47 @@ spread(brfss_data, key = response, value = data_value) %>%
 ```
 
 
+##Problem 2
+
+```{r}
+instacart = instacart %>% 
+  janitor::clean_names()
+```
+
+```{r}
+count(instacart, aisle_id) %>% 
+  nrow()
+
+count(instacart, aisle_id) %>% 
+  filter(min_rank(desc(n)) < 2)
+```
+
+```{r}
+group_by(instacart, aisle_id) %>% 
+  summarize(n = n()) %>% 
+  ggplot(aes(x = aisle_id, y = n)) +
+  geom_bar(stat = "identity") 
+```
+
+```{r}
+filter(instacart, aisle == "baking ingredients" | aisle == "dog food care" | aisle == "packaged vegetables fruits") %>% 
+  group_by(aisle) %>% 
+  summarize(most_popular = max(product_name)) %>% 
+  knitr::kable()
+```
+
+```{r}
+library(lubridate)
+filter(instacart, product_name == "Pink Lady Apples" | product_name == "Coffee Ice Cream") %>% 
+  mutate(order_dow = order_dow + 1) %>% 
+  mutate(day = wday(order_dow, label = TRUE)) %>% 
+  group_by(day, product_name) %>%
+  summarise(mean_hour = mean(order_hour_of_day)) %>% 
+  spread(key = product_name, value = mean_hour) %>% 
+  knitr::kable()
+  
+
+  
+  
+```
+
