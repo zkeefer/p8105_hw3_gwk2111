@@ -14,13 +14,15 @@ library(p8105.datasets)
 
 ##Problem 1
 
+Cleaning the data in order to answer the subsequent questions:
 ```{r}
 brfss_data = brfss_smart2010 %>% 
   janitor::clean_names() %>%
   filter(topic == "Overall Health") %>% 
-  mutate(response = factor(response, levels = c("Excellent", "Very good", "Good", "Fair", "Poor"), ordered = TRUE))
+  mutate(response = factor(response, levels = c("Excellent", "Very good", "Good", "Fair", "Poor"), ordered = TRUE)) 
 ```
 
+###In 2002, which states were observed at 7 locations?
 ```{r}
 filter(brfss_data, year == 2002) %>% 
   group_by(locationabbr) %>% 
@@ -28,13 +30,22 @@ filter(brfss_data, year == 2002) %>%
   filter(location_freq == 7)
 ```
 
+In 2002, Connecticut, Florida, and North Carolina were onbserved at 7 locations.
+
+
+###Make a “spaghetti plot” that shows the number of locations in each state from 2002 to 2010:
 ```{r}
 group_by(brfss_data, locationabbr, year) %>% 
   summarise(location_freq = n_distinct(geo_location)) %>%  
    ggplot(aes(x = year, y = location_freq)) +
-       geom_line(aes(color = locationabbr))   
+       geom_line(aes(color = locationabbr)) +
+  labs(x = "Year",
+       y = "Location Frequency",
+       color = "State")
 ```
 
+
+###Make a table showing, for the years 2002, 2006, and 2010, the mean and standard deviation of the proportion of “Excellent” responses across locations in NY State:
 ```{r}
 filter(brfss_data, year == 2002 | year == 2006 | year == 2010, locationabbr == "NY") %>% 
   spread(key = response, value = data_value) %>% 
@@ -44,6 +55,8 @@ filter(brfss_data, year == 2002 | year == 2006 | year == 2010, locationabbr == "
   knitr::kable(digits = 3)
 ```
 
+
+###For each year and state, compute the average proportion in each response category (taking the average across locations in a state). Make a five-panel plot that shows, for each response category separately, the distribution of these state-level averages over time:
 ```{r}
 spread(brfss_data, key = response, value = data_value) %>% 
   janitor::clean_names() %>% 
@@ -56,7 +69,11 @@ spread(brfss_data, key = response, value = data_value) %>%
   gather(key = response, value = mean, mean_excellent:mean_poor) %>% 
   ggplot(aes(x = year, y = mean)) +
   geom_line(aes(color = locationabbr)) +
-  facet_grid(~response)
+  facet_grid(~response) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(y = "Mean",
+       x = "Year",
+       color = "State")
 ```
 
 
@@ -67,6 +84,8 @@ instacart = instacart %>%
   janitor::clean_names()
 ```
 
+
+
 ```{r}
 count(instacart, aisle_id) %>% 
   nrow()
@@ -76,10 +95,14 @@ count(instacart, aisle_id) %>%
 ```
 
 ```{r}
-group_by(instacart, aisle) %>% 
+group_by(instacart, aisle_id) %>% 
   summarize(n = n()) %>% 
-  ggplot(aes(x = aisle, y = n)) +
-  geom_bar(stat = "identity") 
+  ggplot(aes(x = aisle_id, y = n)) +
+  geom_bar(stat = "identity") +
+  scale_x_continuous(breaks = c(0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 127, 134),
+                     labels = c("0", "10", "20", "30", "40", "50", "60", "70", "80", "90", "100", "110", "120", "127", "134")) +
+  labs(x = "Aisle Number",
+       y = "Count")
 ```
 
 ```{r}
@@ -97,7 +120,9 @@ filter(instacart, product_name == "Pink Lady Apples" | product_name == "Coffee I
   mutate(day = wday(order_dow, label = TRUE)) %>% 
   group_by(day, product_name) %>%
   summarise(mean_hour = mean(order_hour_of_day)) %>% 
-  spread(key = product_name, value = mean_hour) %>% 
+  mutate(mean_hour = hour(date_decimal(mean_hour)),
+         mean_hour = format(strptime(mean_hour, format = "%H"), "%I %p")) %>% 
+  spread(key = day, value = mean_hour) %>% 
   knitr::kable()
   
 ```
